@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:takaride/screens/home_screen.dart';
-import 'package:takaride/screens/signup_screen.dart';
+import 'signup_screen.dart';
 import 'forgot_password_screen.dart';
+import 'main_navigation_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -45,13 +45,13 @@ class _LoginScreenState extends State<LoginScreen> {
       await prefs.setBool('remember_me', true);
     }
 
-    // ✅ Simulate login
+    // Simulate login
     print("Logging in with: ${_phoneController.text} / ${_passwordController.text}");
 
-    // ✅ Navigate to HomeScreen
+    // Navigate to MainNavigation
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => const HomeScreen()),
+      MaterialPageRoute(builder: (context) => const MainNavigation()),
     );
   }
 
@@ -59,86 +59,90 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Spacer(),
-            Center(
-              child: Column(
+      resizeToAvoidBottomInset: true,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Column(
+                  children: [
+                    Image.asset('assets/logo.png', height: 80),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Welcome to TakaRide',
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 32),
+              TextField(
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                decoration: const InputDecoration(
+                  labelText: 'Phone Number',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Password',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              Row(
                 children: [
-                  Image.asset('assets/logo.png', height: 80),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Welcome to TakaRide',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  Checkbox(
+                    value: _rememberMe,
+                    onChanged: (value) {
+                      setState(() {
+                        _rememberMe = value ?? false;
+                      });
+                    },
+                  ),
+                  const Text("Remember Me"),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()),
+                      );
+                    },
+                    child: const Text("Forgot Password?"),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 32),
-            TextField(
-              controller: _phoneController,
-              keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                labelText: 'Phone Number',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Password',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            Row(
-              children: [
-                Checkbox(
-                  value: _rememberMe,
-                  onChanged: (value) {
-                    setState(() {
-                      _rememberMe = value ?? false;
-                    });
-                  },
+              const SizedBox(height: 16),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF27AE60),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                const Text("Remember Me"),
-                const Spacer(),
-                TextButton(
+                onPressed: _login,
+                child: const Text("Login", style: TextStyle(fontSize: 16, color: Colors.white)),
+              ),
+              const SizedBox(height: 24),
+              Center(
+                child: TextButton(
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()),
+                      MaterialPageRoute(builder: (context) => const SignupScreen()),
                     );
                   },
-                  child: const Text("Forgot Password?"),
+                  child: const Text("Don't have an account? Sign up"),
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF27AE60),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              onPressed: _login,
-              child: const Text("Login", style: TextStyle(fontSize: 16, color: Colors.white)),
-            ),
-            const Spacer(flex: 2),
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SignupScreen()),
-                );
-              },
-              child: const Text("Don't have an account? Sign up"),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

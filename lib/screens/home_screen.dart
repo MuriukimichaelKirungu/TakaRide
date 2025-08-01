@@ -165,17 +165,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
 
-      // 🔽 Bottom Navigation Bar (Static for now)
-      bottomNavigationBar: BottomNavigationBar(
-        selectedItemColor: const Color(0xFF27AE60),
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: "Bookings"),
-          BottomNavigationBarItem(icon: Icon(Icons.support_agent), label: "Support"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
-        ],
-      ),
+
     );
   }
 }

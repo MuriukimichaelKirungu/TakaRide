@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:takaride/screens/home_screen.dart';
 import 'package:takaride/screens/signup_screen.dart';
-
 import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -45,8 +45,14 @@ class _LoginScreenState extends State<LoginScreen> {
       await prefs.setBool('remember_me', true);
     }
 
-    // Proceed with authentication logic (call backend here)
+    // ✅ Simulate login
     print("Logging in with: ${_phoneController.text} / ${_passwordController.text}");
+
+    // ✅ Navigate to HomeScreen
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
+    );
   }
 
   @override
@@ -64,7 +70,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Image.asset('assets/logo.png', height: 80),
                   const SizedBox(height: 16),
-                  const Text('Welcome to TakaRide', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Welcome to TakaRide',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
                 ],
               ),
             ),
@@ -104,7 +113,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       context,
                       MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()),
                     );
-
                   },
                   child: const Text("Forgot Password?"),
                 ),
@@ -113,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 16),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF27AE60),
+                backgroundColor: const Color(0xFF27AE60),
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -121,7 +129,6 @@ class _LoginScreenState extends State<LoginScreen> {
               child: const Text("Login", style: TextStyle(fontSize: 16, color: Colors.white)),
             ),
             const Spacer(flex: 2),
-
             TextButton(
               onPressed: () {
                 Navigator.push(
@@ -131,7 +138,6 @@ class _LoginScreenState extends State<LoginScreen> {
               },
               child: const Text("Don't have an account? Sign up"),
             ),
-
           ],
         ),
       ),

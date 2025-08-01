@@ -1,7 +1,65 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'osm_map_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final TextEditingController _locationController = TextEditingController();
+  LatLng? _currentLatLng;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCurrentLocation();
+  }
+
+  Future<void> _fetchCurrentLocation() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return;
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
+      final position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      final latLng = LatLng(position.latitude, position.longitude);
+      setState(() => _currentLatLng = latLng);
+
+      final placemarks = await placemarkFromCoordinates(latLng.latitude, latLng.longitude);
+      if (placemarks.isNotEmpty) {
+        final place = placemarks.first;
+        _locationController.text = "${place.street}, ${place.locality}";
+      }
+    }
+  }
+
+  List<Marker> _buildVehicleMarkers(LatLng center) {
+    final double offset = 0.0015;
+    return [
+      LatLng(center.latitude + offset, center.longitude + offset),
+      LatLng(center.latitude - offset, center.longitude - offset),
+      LatLng(center.latitude + offset, center.longitude - offset),
+      LatLng(center.latitude - offset, center.longitude + offset),
+    ].map((vehiclePos) {
+      return Marker(
+        width: 32,
+        height: 32,
+        point: vehiclePos,
+        child: const Icon(Icons.local_taxi, color: Colors.black, size: 32),
+      );
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,6 +72,7 @@ class HomeScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(16),
               child: TextField(
+                controller: _locationController,
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.search),
                   hintText: "Enter your location or estate",
@@ -24,7 +83,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
 
-            // 🗺️ Map Placeholder
+            // 🗺️ Live Map using OpenStreetMap
             Expanded(
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -32,11 +91,30 @@ class HomeScreen extends StatelessWidget {
                   color: Colors.grey[300],
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Center(
-                  child: Text(
-                    "Map goes here",
-                    style: TextStyle(fontSize: 16, color: Colors.black54),
+                child: _currentLatLng == null
+                    ? const Center(child: CircularProgressIndicator())
+                    : FlutterMap(
+                  options: MapOptions(
+                    center: _currentLatLng,
+                    zoom: 15.0,
                   ),
+                  children: [
+                    TileLayer(
+                      urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      subdomains: const ['a', 'b', 'c'],
+                    ),
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          width: 40,
+                          height: 40,
+                          point: _currentLatLng!,
+                          child: const Icon(Icons.location_pin, color: Colors.red, size: 40),
+                        ),
+                        ..._buildVehicleMarkers(_currentLatLng!),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -50,7 +128,10 @@ class HomeScreen extends StatelessWidget {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        // Navigate to booking now
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const OsmMapScreen()),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF27AE60),
@@ -64,7 +145,10 @@ class HomeScreen extends StatelessWidget {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () {
-                        // Navigate to scheduling screen
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const OsmMapScreen()),
+                        );
                       },
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -76,12 +160,12 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ],
               ),
-            )
+            ),
           ],
         ),
       ),
 
-      // 🔽 Bottom Nav Bar
+      // 🔽 Bottom Navigation Bar (Static for now)
       bottomNavigationBar: BottomNavigationBar(
         selectedItemColor: const Color(0xFF27AE60),
         unselectedItemColor: Colors.grey,

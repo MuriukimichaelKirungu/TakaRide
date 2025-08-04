@@ -3,7 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'osm_map_screen.dart';
+import 'booking_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,7 +15,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _destinationController = TextEditingController();
-
   LatLng? _currentLatLng;
 
   @override
@@ -63,49 +62,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }).toList();
   }
 
-  void _showRideSummary() {
-    final pickup = _locationController.text.trim();
-    final destination = _destinationController.text.trim();
-
-    if (pickup.isEmpty || destination.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter both pickup and destination')),
-      );
-      return;
-    }
-
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Confirm Ride"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text("Pickup: $pickup"),
-            Text("Destination: $destination"),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Trigger actual ride request later here
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Ride requested successfully!')),
-              );
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF27AE60)),
-            child: const Text("Confirm"),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -141,7 +97,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-
             Expanded(
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -176,21 +131,24 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: _showRideSummary,
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const BookingScreen(isScheduled: false)),
+                        );
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF27AE60),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: const Text("Request Now", style: TextStyle(fontSize: 16, color: Colors.white)),
+                      child: const Text("Request Now", style: TextStyle(fontSize: 16)),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -199,7 +157,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => const OsmMapScreen()),
+                          MaterialPageRoute(builder: (_) => const BookingScreen(isScheduled: true)),
                         );
                       },
                       style: OutlinedButton.styleFrom(

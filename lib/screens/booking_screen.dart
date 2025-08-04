@@ -1,218 +1,102 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
-
-import 'package:takaride/screens/payment_screen.dart';
 
 class BookingScreen extends StatefulWidget {
-  const BookingScreen({super.key});
+  final bool isScheduled;
+
+  const BookingScreen({
+    Key? key,
+    this.isScheduled = false,
+  }) : super(key: key);
 
   @override
   State<BookingScreen> createState() => _BookingScreenState();
 }
 
 class _BookingScreenState extends State<BookingScreen> {
-  final _locationController = TextEditingController();
-  final _volumeController = TextEditingController();
+  String _selectedRideType = 'Standard';
+  final List<String> _rideTypes = ['Standard', 'Premium', 'Bike'];
+  double _estimatedFare = 0.0;
 
-  String? _selectedPitType;
-  DateTime? _selectedDate;
-  TimeOfDay? _selectedTime;
-  File? _imageFile;
-
-  final List<String> _pitTypes = [
-    "Septic Tank",
-    "Pit Latrine",
-    "Biodigester",
-    "Other"
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _volumeController.addListener(() {
-      setState(() {}); // Rebuild UI to update cost when volume changes
+  void _calculateFare() {
+    setState(() {
+      switch (_selectedRideType) {
+        case 'Standard':
+          _estimatedFare = 5.0;
+          break;
+        case 'Premium':
+          _estimatedFare = 9.0;
+          break;
+        case 'Bike':
+          _estimatedFare = 3.0;
+          break;
+      }
     });
   }
 
   @override
-  void dispose() {
-    _locationController.dispose();
-    _volumeController.dispose();
-    super.dispose();
-  }
-
-  void _pickDate() async {
-    final date = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now().add(const Duration(days: 1)),
-      firstDate: DateTime.now(),
-      lastDate: DateTime(2100),
-    );
-    if (date != null) setState(() => _selectedDate = date);
-  }
-
-  void _pickTime() async {
-    final time = await showTimePicker(
-      context: context,
-      initialTime: const TimeOfDay(hour: 9, minute: 0),
-    );
-    if (time != null) setState(() => _selectedTime = time);
-  }
-
-  void _pickImage() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (picked != null) setState(() => _imageFile = File(picked.path));
-  }
-
-  double calculateCost() {
-    final volume = double.tryParse(_volumeController.text) ?? 0;
-    return 1500 + (volume * 0.5);
+  void initState() {
+    super.initState();
+    _calculateFare();
   }
 
   @override
   Widget build(BuildContext context) {
-    final String dateLabel = _selectedDate != null
-        ? DateFormat.yMMMd().format(_selectedDate!)
-        : 'Select Date';
-
-    final String timeLabel =
-    _selectedTime != null ? _selectedTime!.format(context) : 'Select Time';
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Book a Pickup"),
+        title:
+        Text(widget.isScheduled ? 'Schedule a Ride' : 'Request a Ride'),
         backgroundColor: const Color(0xFF27AE60),
+        foregroundColor: Colors.white,
       ),
-      body: SingleChildScrollView(
+      body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Location"),
-            const SizedBox(height: 4),
-            TextField(
-              controller: _locationController,
-              decoration: const InputDecoration(
-                hintText: "Enter location or estate",
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            const Text("Pit Type"),
-            const SizedBox(height: 4),
-            DropdownButtonFormField<String>(
-              value: _selectedPitType,
-              items: _pitTypes.map((type) {
-                return DropdownMenuItem(value: type, child: Text(type));
-              }).toList(),
-              onChanged: (val) => setState(() => _selectedPitType = val),
-              decoration: const InputDecoration(border: OutlineInputBorder()),
-            ),
-            const SizedBox(height: 16),
-
-            const Text("Approximate Volume (litres)"),
-            const SizedBox(height: 4),
-            TextField(
-              controller: _volumeController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                hintText: "e.g. 5000",
-                border: OutlineInputBorder(),
-              ),
-            ),
-
-            // Show estimated cost
-            if (_volumeController.text.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(
-                "Estimated Cost: KES ${calculateCost().toStringAsFixed(2)}",
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
-                ),
-              ),
-            ],
-            const SizedBox(height: 16),
-
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _pickDate,
-                    child: Text(dateLabel),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _pickTime,
-                    child: Text(timeLabel),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            const Text("Upload Site Photo (Optional)"),
-            const SizedBox(height: 8),
-            GestureDetector(
-              onTap: _pickImage,
-              child: Container(
-                height: 150,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(12),
-                  color: Colors.grey[100],
-                ),
-                child: _imageFile != null
-                    ? Image.file(_imageFile!, fit: BoxFit.cover)
-                    : const Center(child: Icon(Icons.camera_alt, size: 40)),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            ElevatedButton(
-              onPressed: () {
-                if (_locationController.text.isEmpty ||
-                    _selectedPitType == null ||
-                    _volumeController.text.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Please fill in all fields")),
-                  );
-                  return;
-                }
-
-                final double volume = double.tryParse(_volumeController.text) ?? 0;
-                final double cost = calculateCost();
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => PaymentScreen(
-                      location: _locationController.text,
-                      pitType: _selectedPitType!,
-                      volume: volume,
-                      cost: cost,
-                    ),
-                  ),
+            const Text('Choose Ride Type',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 10,
+              children: _rideTypes.map((type) {
+                return ChoiceChip(
+                  label: Text(type),
+                  selected: _selectedRideType == type,
+                  onSelected: (_) {
+                    setState(() {
+                      _selectedRideType = type;
+                      _calculateFare();
+                    });
+                  },
+                  selectedColor: const Color(0xFF27AE60),
+                  labelStyle: TextStyle(
+                      color: _selectedRideType == type
+                          ? Colors.white
+                          : Colors.black),
                 );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF27AE60),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+              }).toList(),
+            ),
+            const SizedBox(height: 20),
+            Text('Estimated Fare: \$${_estimatedFare.toStringAsFixed(2)}',
+                style: const TextStyle(fontSize: 16)),
+            const Spacer(),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(widget.isScheduled
+                          ? 'Scheduled ride confirmed'
+                          : 'Ride requested successfully')));
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF27AE60),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
+                child: Text(widget.isScheduled ? 'Confirm Schedule' : 'Confirm'),
               ),
-              child: const Center(
-                child: Text("Confirm Booking & Proceed to Payment"),
-              ),
-            )
-
+            ),
           ],
         ),
       ),

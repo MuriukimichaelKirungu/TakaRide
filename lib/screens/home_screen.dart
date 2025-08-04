@@ -14,6 +14,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _locationController = TextEditingController();
+  final TextEditingController _destinationController = TextEditingController();
+
   LatLng? _currentLatLng;
 
   @override
@@ -61,6 +63,49 @@ class _HomeScreenState extends State<HomeScreen> {
     }).toList();
   }
 
+  void _showRideSummary() {
+    final pickup = _locationController.text.trim();
+    final destination = _destinationController.text.trim();
+
+    if (pickup.isEmpty || destination.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter both pickup and destination')),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Confirm Ride"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("Pickup: $pickup"),
+            Text("Destination: $destination"),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // Trigger actual ride request later here
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Ride requested successfully!')),
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF27AE60)),
+            child: const Text("Confirm"),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -68,22 +113,35 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // 🔍 Search Bar
             Padding(
               padding: const EdgeInsets.all(16),
-              child: TextField(
-                controller: _locationController,
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.search),
-                  hintText: "Enter your location or estate",
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  filled: true,
-                  fillColor: Colors.grey[100],
-                ),
+              child: Column(
+                children: [
+                  TextField(
+                    controller: _locationController,
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.my_location),
+                      hintText: "Pickup location",
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _destinationController,
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.location_on),
+                      hintText: "Destination",
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                    ),
+                  ),
+                ],
               ),
             ),
 
-            // 🗺️ Live Map using OpenStreetMap
             Expanded(
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -119,7 +177,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            // ⚡ Quick Action Buttons
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
               child: Row(
@@ -127,12 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const OsmMapScreen()),
-                        );
-                      },
+                      onPressed: _showRideSummary,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF27AE60),
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -164,8 +216,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-
-
     );
   }
 }
